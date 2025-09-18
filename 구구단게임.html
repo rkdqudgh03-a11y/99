@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>신나는 구구단 게임!</title>
+    <style>
+        /* 기본 스타일 */
+        body {
+            font-family: 'GmarketSansMedium', 'Pretendard', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f8ff;
+            color: #333;
+            text-align: center;
+        }
+
+        /* 게임 전체를 감싸는 컨테이너 */
+        #game-container {
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            border-radius: 20px;
+            background-color: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        /* 화면 전환 시 부드러운 효과 */
+        .screen {
+            display: none; /* 기본적으로 모든 화면 숨김 */
+        }
+
+        .screen.active {
+            display: block; /* active 클래스가 있는 화면만 보여줌 */
+        }
+        
+        /* 구구단 선택 버튼 스타일 */
+        .dan-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .dan-btn {
+            padding: 15px 10px;
+            font-size: 1.2rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .dan-btn:hover {
+            background-color: #e9ecef;
+        }
+        
+        .dan-btn.selected {
+            background-color: #007bff;
+            color: white;
+            border-color: #0056b3;
+        }
+
+        /* 문제 및 정답 입력란 스타일 */
+        #problem-area {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 30px 0;
+            color: #343a40;
+        }
+
+        #answer-input {
+            width: 100px;
+            padding: 10px;
+            font-size: 2rem;
+            text-align: center;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+        }
+
+        /* 버튼 기본 스타일 */
+        .action-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            background-color: #28a745;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: #218838;
+        }
+
+        /* 다음 단계로 넘어가는 버튼 */
+        #level-up-btn {
+            background-color: #ffc107;
+            color: #333;
+        }
+        #level-up-btn:hover {
+            background-color: #e0a800;
+        }
+
+        /* 게임 정보 표시 (점수, 단계 등) */
+        #game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            font-size: 1.1rem;
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        /* 메시지 스타일 */
+        #message {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 15px;
+            height: 30px;
+        }
+        
+        .correct { color: #28a745; }
+        .incorrect { color: #dc3545; }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>신나는 구구단 게임!</h1>
+
+        <div id="beginner-setup" class="screen active">
+            <h2>초보 단계</h2>
+            <p>가장 어려운 구구단을 1개 선택하세요.</p>
+            <div id="beginner-selector" class="dan-selector"></div>
+            <button id="start-beginner-btn" class="action-btn">초보 단계 시작!</button>
+        </div>
+
+        <div id="intermediate-setup" class="screen">
+            <h2>중수 단계</h2>
+            <p>연습할 구구단 5개를 선택하세요.</p>
+            <div id="intermediate-selector" class="dan-selector"></div>
+            <button id="start-intermediate-btn" class="action-btn">중수 단계 시작!</button>
+        </div>
+
+        <div id="expert-setup" class="screen">
+            <h2>고수 단계</h2>
+            <p>이제 모든 구구단(1단~9단)에서 문제가 나옵니다!</p>
+            <button id="start-expert-btn" class="action-btn">고수 단계 시작!</button>
+        </div>
+
+        <div id="game-play" class="screen">
+            <div id="problem-area">3 X 5 = ?</div>
+            <input type="number" id="answer-input" autofocus>
+            <button id="submit-btn" class="action-btn">정답 확인</button>
+            <div id="message"></div>
+            <div id="game-info">
+                <span>단계: <b id="current-stage-display">초보</b></span>
+                <span>점수: <b id="score-display">0</b></span>
+                <span>연속 정답: <b id="streak-display">0</b></span>
+            </div>
+        </div>
+        
+        <div id="level-up" class="screen">
+            <h2>정말 잘하시네요!</h2>
+            <button id="level-up-btn" class="action-btn">다음 단계로</button>
+        </div>
+        
+         <div id="game-clear" class="screen">
+            <h2>축하합니다!</h2>
+            <p>모든 단계를 완료했습니다!</p>
+            <button id="restart-btn" class="action-btn">처음부터 다시하기</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- DOM 요소 가져오기 ---
+        const screens = document.querySelectorAll('.screen');
+        const beginnerSelector = document.getElementById('beginner-selector');
+        const intermediateSelector = document.getElementById('intermediate-selector');
+        
+        const problemArea = document.getElementById('problem-area');
+        const answerInput = document.getElementById('answer-input');
+        const messageDiv = document.getElementById('message');
+        
+        const stageDisplay = document.getElementById('current-stage-display');
+        const scoreDisplay = document.getElementById('score-display');
+        const streakDisplay = document.getElementById('streak-display');
+        
+        // --- 버튼 가져오기 ---
+        const startBeginnerBtn = document.getElementById('start-beginner-btn');
+        const startIntermediateBtn = document.getElementById('start-intermediate-btn');
+        const startExpertBtn = document.getElementById('start-expert-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const levelUpBtn = document.getElementById('level-up-btn');
+        const restartBtn = document.getElementById('restart-btn');
+
+        // --- 게임 상태 변수 ---
+        let currentStage = '초보';
+        let selectedDan = [];
+        let currentAnswer = 0;
+        let score = 0;
+        let consecutiveCorrect = 0;
+
+        // --- 함수 정의 ---
+
+        // 화면 전환 함수
+        function showScreen(screenId) {
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // 구구단 선택 버튼 생성 함수
+        function createDanButtons(container, maxSelection) {
+            container.innerHTML = '';
+            for (let i = 1; i <= 9; i++) {
+                const btn = document.createElement('button');
+                btn.classList.add('dan-btn');
+                btn.textContent = `${i}단`;
+                btn.dataset.dan = i;
+                
+                btn.addEventListener('click', () => {
+                    if (maxSelection === 1) {
+                        // 1개만 선택 가능 (초보)
+                        const allBtns = container.querySelectorAll('.dan-btn');
+                        allBtns.forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        selectedDan = [parseInt(btn.dataset.dan)];
+                    } else {
+                        // 여러 개 선택 가능 (중수)
+                        if (btn.classList.contains('selected')) {
+                            btn.classList.remove('selected');
+                        } else {
+                            if (container.querySelectorAll('.selected').length < maxSelection) {
+                                btn.classList.add('selected');
+                            } else {
+                                alert(`${maxSelection}개까지만 선택할 수 있어요!`);
+                            }
+                        }
+                    }
+                });
+                container.appendChild(btn);
+            }
+        }
+        
+        // 문제 생성 함수
+        function generateProblem() {
+            let dan;
+            if (currentStage === '고수') {
+                dan = Math.floor(Math.random() * 9) + 1; // 1~9
+            } else {
+                const randomIndex = Math.floor(Math.random() * selectedDan.length);
+                dan = selectedDan[randomIndex];
+            }
+            
+            const num2 = Math.floor(Math.random() * 9) + 1; // 1~9 곱하기
+            currentAnswer = dan * num2;
+            problemArea.textContent = `${dan} X ${num2} = ?`;
+            answerInput.value = '';
+            answerInput.focus();
+        }
+
+        // 게임 정보 표시 업데이트 함수
+        function updateDisplay() {
+            stageDisplay.textContent = currentStage;
+            scoreDisplay.textContent = score;
+            streakDisplay.textContent = consecutiveCorrect;
+        }
+
+        // 메시지 표시 함수
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.className = type; // 'correct' 또는 'incorrect'
+            setTimeout(() => { messageDiv.textContent = '' }, 1500);
+        }
+
+        // 정답 확인 및 처리 함수
+        function checkAnswer() {
+            const userAnswer = parseInt(answerInput.value);
+            if (isNaN(userAnswer)) {
+                showMessage('숫자를 입력해주세요!', 'incorrect');
+                return;
+            }
+
+            if (userAnswer === currentAnswer) {
+                // 정답
+                showMessage('정답입니다! 🎉', 'correct');
+                score += 1;
+                consecutiveCorrect += 1;
+
+                if ((currentStage !== '고수') && (score >= 10 || consecutiveCorrect >= 5)) {
+                    showScreen('level-up');
+                } else {
+                    generateProblem();
+                }
+            } else {
+                // 오답
+                showMessage(`아쉬워요! 정답은 ${currentAnswer}입니다.`, 'incorrect');
+                score = Math.max(0, score - 2); // 0점 밑으로 안 내려감
+                consecutiveCorrect = 0;
+                generateProblem();
+            }
+            updateDisplay();
+        }
+
+        // 게임 시작 및 단계 설정 함수
+        function startGame() {
+            score = 0;
+            consecutiveCorrect = 0;
+            updateDisplay();
+            generateProblem();
+            showScreen('game-play');
+        }
+        
+        // --- 이벤트 리스너 설정 ---
+
+        // 초보 단계 시작 버튼
+        startBeginnerBtn.addEventListener('click', () => {
+            if (selectedDan.length === 0) {
+                alert('구구단을 1개 선택해주세요!');
+                return;
+            }
+            startGame();
+        });
+
+        // 중수 단계 시작 버튼
+        startIntermediateBtn.addEventListener('click', () => {
+            selectedDan = [];
+            const selectedBtns = intermediateSelector.querySelectorAll('.selected');
+            if (selectedBtns.length !== 5) {
+                alert('구구단을 5개 선택해주세요!');
+                return;
+            }
+            selectedBtns.forEach(btn => {
+                selectedDan.push(parseInt(btn.dataset.dan));
+            });
+            startGame();
+        });
+        
+        // 고수 단계 시작 버튼
+        startExpertBtn.addEventListener('click', () => {
+            selectedDan = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            startGame();
+        });
+
+        // 정답 제출 버튼
+        submitBtn.addEventListener('click', checkAnswer);
+        answerInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // 다음 단계로 가기 버튼
+        levelUpBtn.addEventListener('click', () => {
+            if (currentStage === '초보') {
+                currentStage = '중수';
+                createDanButtons(intermediateSelector, 5);
+                showScreen('intermediate-setup');
+            } else if (currentStage === '중수') {
+                currentStage = '고수';
+                showScreen('expert-setup');
+            }
+        });
+        
+        // 다시하기 버튼
+        restartBtn.addEventListener('click', () => {
+            currentStage = '초보';
+            selectedDan = [];
+            createDanButtons(beginnerSelector, 1);
+            showScreen('beginner-setup');
+        });
+
+        // --- 초기화 ---
+        function init() {
+            createDanButtons(beginnerSelector, 1);
+            showScreen('beginner-setup');
+        }
+
+        init(); // 게임 시작!
+
+    </script>
+</body>
+</html>
